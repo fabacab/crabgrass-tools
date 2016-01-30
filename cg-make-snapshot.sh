@@ -8,9 +8,9 @@
 # Examples:    Use cg-make-snapshot.sh to create a mirror containing
 #              the contents of a Crabgrass group.
 #
-#                  cd $BACKUP_DIR; cg-make-snapshot.sh group-name
+#                  cd $CG_DIR; cg-make-snapshot.sh "group-name"
 #
-#              where $BACKUP_DIR is the directory you want to make the
+#              where $CG_DIR is the directory you want to make the
 #              new mirror in and "group-name" is what appears in the URL
 #              of your Web browser when looking at your group.
 #
@@ -45,6 +45,8 @@ readonly LOGIN_PATH="/session/login"
 # TODO: This should be user-settable.
 readonly BASE_URL="https://we.riseup.net"
 
+CG_GROUP="$1"
+
 # Function: login
 #
 # Logs in to the Crabgrass server.
@@ -78,13 +80,12 @@ function cleanup () {
 echo -n "Username: "
 read USERNAME
 echo -n "Password: "
-#read -s PASSWORD
 read -s PASSWORD
 
 login $USERNAME $PASSWORD "${BASE_URL}${LOGIN_PATH}"
 
-INCLUDE_PATH="/${1},/groups/${1}"
+INCLUDE_PATH="/${CG_GROUP},/groups/${CG_GROUP}"
 
 # Download homepage.
 wget --load-cookies "$COOKIE_FILE" --mirror --include "$INCLUDE_PATH" --convert-links \
-    --retry-connrefused --page-requisites --html-extension "${BASE_URL}/${1}/"
+    --retry-connrefused --page-requisites --html-extension "${BASE_URL}/${CG_GROUP}/"

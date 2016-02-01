@@ -82,7 +82,7 @@ read USERNAME
 echo -n "Password: "
 read -s PASSWORD
 
-login $USERNAME $PASSWORD "${BASE_URL}${LOGIN_PATH}"
+login "$USERNAME" "$PASSWORD" "${BASE_URL}${LOGIN_PATH}"
 
 INCLUDE_PATH="/${CG_GROUP},/groups/${CG_GROUP}"
 

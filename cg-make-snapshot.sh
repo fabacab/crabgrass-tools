@@ -86,7 +86,8 @@ function usage () {
     echo "    Prints this usage output and exits."
     echo
     echo "$PROGRAM [--username|--user|-u <user>] [--password|-p <password>]"
-    echo "         [--subgroup] [--base-url] [--dry-run] <cg_group> [cg_group_2 ...]"
+    echo "         [--base-url <url>] [--subgroup] [--dry-run]"
+    echo "         <crabgrass_group> [crabgrass_group_2 [crabgrass_group_N...]]"
     echo "    Creates a static backup (an HTML snapshot) of <cg_group>."
     echo "    You can pass additional group names to snapshot them, as well."
     echo
@@ -96,14 +97,14 @@ function usage () {
     echo "    Note that passing password arguments on the command line is insecure and"
     echo "    may reveal your password to users on the system where $PROGRAM runs."
     echo
+    echo "    If '--base-url' is specified, uses the Crabgrass instance running at"
+    echo "    the given URL. Defaults to: $DEFAULT_BASE_URL"
+    echo
     echo "    If '--subgroup' is specified, looks for committees and/or councils that"
     echo "    are associated with <crabgrass_group> and includes them in the snapshot."
     echo
     echo "    If '--dry-run' is specified, $PROGRAM echos the mirroring commands that"
     echo "    would have been run, but does not actually create a snapshot."
-    echo
-    echo "    If '--base-url' is specified, uses the Crabgrass instance running at"
-    echo "    the given URL. Defaults to: $DEFAULT_BASE_URL"
 }
 
 # Function: cleanup

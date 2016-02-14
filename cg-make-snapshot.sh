@@ -160,7 +160,7 @@ function getSubgroups () {
 #     $BASE_URL
 function mirrorGroup () {
     local group="$1"
-    local include_path="/${group},/groups/${group}"
+    local include_path="/${group},/groups/${group},/assets"
     echo "Mirroring group $group..."
     $DRY_RUN wget --load-cookies "$COOKIE_FILE" --mirror \
         --include "$include_path" --convert-links --retry-connrefused \

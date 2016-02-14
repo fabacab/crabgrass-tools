@@ -55,6 +55,7 @@ readonly E_BAD_OPTION=254
 readonly E_UNKNOWN=255
 
 # DEFAULT ARGUMENTS
+DEFAULT_DOWNLOAD_DIR="."
 DEFAULT_BASE_URL="https://we.riseup.net"
 
 # ARGUMENTS
@@ -86,6 +87,7 @@ function usage () {
     echo "    Prints this usage output and exits."
     echo
     echo "$PROGRAM [--username|--user|-u <user>] [--password|-p <password>]"
+    echo "         [--download-directory <dir>]"
     echo "         [--base-url <url>] [--subgroup] [--dry-run]"
     echo "         <crabgrass_group> [crabgrass_group_2 [crabgrass_group_N...]]"
     echo "    Creates a static backup (an HTML snapshot) of <cg_group>."
@@ -96,6 +98,9 @@ function usage () {
     echo "    If '--password' is specified, does not prompt for a Crabgrass password."
     echo "    Note that passing password arguments on the command line is insecure and"
     echo "    may reveal your password to users on the system where $PROGRAM runs."
+    echo
+    echo "    If '--download-directory' is specified, all files will be downloaded to"
+    echo "    the given directory. Defaults to: $DEFAULT_DOWNLOAD_DIR"
     echo
     echo "    If '--base-url' is specified, uses the Crabgrass instance running at"
     echo "    the given URL. Defaults to: $DEFAULT_BASE_URL"
@@ -164,6 +169,7 @@ function mirrorGroup () {
     echo "Mirroring group $group..."
     $DRY_RUN wget --load-cookies "$COOKIE_FILE" --mirror \
         --include "$include_path" --convert-links --retry-connrefused \
+        --directory-prefix "${DOWNLOAD_DIR}" \
         --page-requisites --html-extension "${BASE_URL}/${group}/"
 }
 
@@ -196,6 +202,12 @@ function main () {
             --dry-run )
                 shift
                 DRY_RUN="echo"
+                ;;
+
+            --download-directory )
+                shift
+                DOWNLOAD_DIR="$1"
+                shift
                 ;;
 
             --base-url )
@@ -238,6 +250,9 @@ function main () {
     fi
     if [ -z "$PASSWORD" ]; then
         read -s -p "Password: " PASSWORD
+    fi
+    if [ -z "$DOWNLOAD_DIR" ]; then
+        DOWNLOAD_DIR="$DEFAULT_DOWNLOAD_DIR"
     fi
     if [ -z "$BASE_URL" ]; then
         BASE_URL="$DEFAULT_BASE_URL"

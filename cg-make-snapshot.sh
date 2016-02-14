@@ -100,7 +100,8 @@ function usage () {
     echo "    may reveal your password to users on the system where $PROGRAM runs."
     echo
     echo "    If '--download-directory' is specified, all files will be downloaded to"
-    echo "    the given directory. Defaults to: $DEFAULT_DOWNLOAD_DIR"
+    echo "    the given directory. Defaults to the current working directory,"
+    echo "    which is: $DEFAULT_DOWNLOAD_DIR"
     echo
     echo "    If '--base-url' is specified, uses the Crabgrass instance running at"
     echo "    the given URL. Defaults to: $DEFAULT_BASE_URL"

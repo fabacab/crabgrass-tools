@@ -151,9 +151,9 @@ function login () {
 function getSubgroups () {
     local group="$1"
     wget --quiet --load-cookies "$COOKIE_FILE" -O - "${BASE_URL}/${group}/" \
-        | grep "href=\"/${group}+" \
+        | grep -E --only-matching "href=\"/${group}\+\w+" \
             | cut -d '"' -f 2 | cut -d '/' -f 2 \
-                | grep "$group" | uniq
+                | grep "$group" | sort | uniq
 }
 
 # Function: mirrorGroup
@@ -163,13 +163,26 @@ function getSubgroups () {
 # Uses globals:
 #     $DRY_RUN
 #     $COOKIE_FILE
+#     $DOWNLOAD_DIR
 #     $BASE_URL
 function mirrorGroup () {
     local group="$1"
     local include_path="/${group},/groups/${group},/assets"
-    echo "Mirroring group $group..."
+
+    if [ 1 -eq $SUBGROUP ]; then
+        echo "Finding subgroups for $group..."
+        read -r -a subgroups <<< `getSubgroups "$group"`
+        echo "Mirroring group $group with all subgroups: ${subgroups[@]} "
+        for subgroup in ${subgroups[@]}; do
+            include_path="${include_path},/${subgroup},/groups/${subgroup}"
+        done
+    else 
+      echo "Mirroring group $group..."
+    fi
+
     $DRY_RUN wget --load-cookies "$COOKIE_FILE" --mirror \
         --include "$include_path" --convert-links --retry-connrefused \
+        --reject-regex "/edit\.html" \
         --directory-prefix "${DOWNLOAD_DIR}" \
         --page-requisites --html-extension "${BASE_URL}/${group}/"
 }
@@ -263,13 +276,6 @@ function main () {
 
     for group in "$@"; do
         mirrorGroup "$group"
-        if [ 1 -eq $SUBGROUP ]; then
-            echo "Finding subgroups for $group..."
-            read -r -a subgroups <<< `getSubgroups "$group"`
-            for subgroup in ${subgroups[@]}; do
-                mirrorGroup "$subgroup"
-            done
-        fi
     done
 }
 

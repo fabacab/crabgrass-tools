@@ -182,7 +182,7 @@ function mirrorGroup () {
 
     $DRY_RUN wget --load-cookies "$COOKIE_FILE" --mirror \
         --include "$include_path" --convert-links --retry-connrefused \
-        --reject-regex "/edit\.html" \
+        --reject "edit.html" \
         --directory-prefix "${DOWNLOAD_DIR}" \
         --page-requisites --html-extension "${BASE_URL}/${group}/"
 }

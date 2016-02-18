@@ -151,7 +151,7 @@ function login () {
 function getSubgroups () {
     local group="$1"
     wget --quiet --load-cookies "$COOKIE_FILE" -O - "${BASE_URL}/${group}/" \
-        | grep -E --only-matching "href=\"/${group}\+\w+" \
+        | grep -E --only-matching "href=\"/${group}\+[^\"]+" \
             | cut -d '"' -f 2 | cut -d '/' -f 2 \
                 | grep "$group" | sort | uniq
 }
@@ -168,6 +168,7 @@ function getSubgroups () {
 function mirrorGroup () {
     local group="$1"
     local include_path="/${group},/groups/${group},/assets"
+    local url="${BASE_URL}/${group}/"
 
     if [ 1 -eq $SUBGROUP ]; then
         echo "Finding subgroups for $group..."
@@ -175,6 +176,7 @@ function mirrorGroup () {
         echo "Mirroring group $group with all subgroups: ${subgroups[@]} "
         for subgroup in ${subgroups[@]}; do
             include_path="${include_path},/${subgroup},/groups/${subgroup}"
+            url="${url} ${BASE_URL}/${subgroup}"
         done
     else 
       echo "Mirroring group $group..."
@@ -184,7 +186,7 @@ function mirrorGroup () {
         --include "$include_path" --convert-links --retry-connrefused \
         --reject "edit.html" \
         --directory-prefix "${DOWNLOAD_DIR}" \
-        --page-requisites --html-extension "${BASE_URL}/${group}/"
+        --page-requisites --html-extension ${url}
 }
 
 function main () {

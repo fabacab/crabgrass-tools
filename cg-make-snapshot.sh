@@ -63,6 +63,7 @@ BASE_URL=""
 USERNAME=""
 PASSWORD=""
 DRY_RUN=""
+TOR=""
 SUBGROUP=0
 
 # Function: version
@@ -88,7 +89,7 @@ function usage () {
     echo
     echo "$PROGRAM [--username|--user|-u <user>] [--password|-p <password>]"
     echo "         [--download-directory <dir>]"
-    echo "         [--base-url <url>] [--subgroup] [--dry-run]"
+    echo "         [--base-url <url>] [--subgroup] [--dry-run] [--tor]"
     echo "         <crabgrass_group> [crabgrass_group_2 [crabgrass_group_N...]]"
     echo "    Creates a static backup (an HTML snapshot) of <cg_group>."
     echo "    You can pass additional group names to snapshot them, as well."
@@ -111,6 +112,9 @@ function usage () {
     echo
     echo "    If '--dry-run' is specified, $PROGRAM echos the mirroring commands that"
     echo "    would have been run, but does not actually create a snapshot."
+    echo
+    echo "    If '--tor' is specified, $PROGRAM uses torsocks to proxy all requests"
+    echo "    through tor."
 }
 
 # Function: cleanup
@@ -138,7 +142,7 @@ function login () {
     local post_data="login=${username}&password=${password}"
     echo
     echo "Logging in as $USERNAME..."
-    wget --quiet --save-cookies "$COOKIE_FILE" --keep-session-cookies \
+    $TOR wget --quiet --save-cookies "$COOKIE_FILE" --keep-session-cookies \
         --post-data "$post_data" -O /dev/null \
             "$login_url"
 }
@@ -150,7 +154,7 @@ function login () {
 # Outputs each found group on its own line.
 function getSubgroups () {
     local group="$1"
-    wget --quiet --load-cookies "$COOKIE_FILE" -O - "${BASE_URL}/${group}/" \
+    $TOR wget --quiet --load-cookies "$COOKIE_FILE" -O - "${BASE_URL}/${group}/" \
         | grep -E --only-matching "href=\"/${group}\+[^\"]+" \
             | cut -d '"' -f 2 | cut -d '/' -f 2 \
                 | grep "$group" | sort | uniq
@@ -182,7 +186,7 @@ function mirrorGroup () {
       echo "Mirroring group $group..."
     fi
 
-    $DRY_RUN wget --load-cookies "$COOKIE_FILE" --mirror \
+    $DRY_RUN $TOR wget --load-cookies "$COOKIE_FILE" --mirror \
         --include "$include_path" --convert-links --retry-connrefused \
         --reject "edit.html" \
         --directory-prefix "${DOWNLOAD_DIR}" \
@@ -218,6 +222,11 @@ function main () {
             --dry-run )
                 shift
                 DRY_RUN="echo"
+                ;;
+
+            --tor )
+                shift
+                TOR="torsocks"
                 ;;
 
             --download-directory )

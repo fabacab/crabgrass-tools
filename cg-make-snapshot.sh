@@ -135,16 +135,42 @@ function cleanup () {
 #
 # Will create a cookies file for later use in $COOKIE_FILE
 function login () {
+
+    
     local username="$1"
     local password="$2"
     local login_url="$3"
 
-    local post_data="login=${username}&password=${password}"
-    echo
+    local token="$(wget --save-cookies "$COOKIE_FILE" --keep-session-cookies -O- "$BASE_URL"| grep    -siPo  '(?<=<input type=\"hidden\" name=\"authenticity_token\" value=\")(.*)(?=\" />)')" #load login page, get authenticity token and save cookies
+
+    local token_encoded="$(rawurlencode "$token")" #percent-encode the token
+    local post_data="authenticity_token=${token_encoded}&login=${username}&password=${password}"
+    
     echo "Logging in as $USERNAME..."
-    $TOR wget --quiet --save-cookies "$COOKIE_FILE" --keep-session-cookies \
+    $TOR wget  --load-cookies "$COOKIE_FILE" --save-cookies "$COOKIE_FILE" --keep-session-cookies \
         --post-data "$post_data" -O /dev/null \
             "$login_url"
+}
+
+
+# function to percent-encode the authenticity token
+# thanks to Orwellophile / stackoverflow :)
+function rawurlencode() {
+  local string="${1}"
+  local strlen=${#string}
+  local encoded=""
+  local pos c o
+
+  for (( pos=0 ; pos<strlen ; pos++ )); do
+     c=${string:$pos:1}
+     case "$c" in
+        [-_.~a-zA-Z0-9] ) o="${c}" ;;
+        * )               printf -v o '%%%02x' "'$c"
+     esac
+     encoded+="${o}"
+  done
+  echo "${encoded}"
+  REPLY="${encoded}"
 }
 
 # Function: getSubgroups

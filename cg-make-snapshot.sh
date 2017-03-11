@@ -40,12 +40,11 @@ trap 'cleanup' QUIT EXIT
 # For security reasons, explicitly set the internal field separator
 # to newline, space, tab
 readonly OLD_IFS=$IFS
-IFS='
- 	'
+IFS=$'\n \t'
 
 # CONSTANTS
 readonly PROGRAM=`basename "$0"`
-readonly VERSION="0.0.2"
+readonly VERSION="0.0.3"
 readonly COOKIE_FILE=`mktemp ${PROGRAM}_cookies.XXXXX`
 readonly LOGIN_PATH="/session/login"
 
@@ -113,15 +112,15 @@ function usage () {
     echo "    If '--dry-run' is specified, $PROGRAM echos the mirroring commands that"
     echo "    would have been run, but does not actually create a snapshot."
     echo
-    echo "    If '--tor' is specified, $PROGRAM uses torsocks to proxy all requests"
-    echo "    through tor."
+    echo "    If '--tor' is specified, $PROGRAM uses torsocks(1) to proxy all requests"
+    echo "    through Tor."
 }
 
 # Function: cleanup
 # 
 # Removes cookies from the filesystem when the script terminates.
 # This is important because the cookie is an authentication token and
-# if it is comprmised an attacker could impersonate a legitmate user.
+# if it is compromised an attacker could impersonate a legitmate user.
 #
 # Uses global $COOKIE_FILE
 function cleanup () {
@@ -135,42 +134,39 @@ function cleanup () {
 #
 # Will create a cookies file for later use in $COOKIE_FILE
 function login () {
-
-    
     local username="$1"
     local password="$2"
     local login_url="$3"
+    local html       # Acquired raw HTML
+    local csrf_param # CSRF parameter name
+    local token      # CSRF token value
+    local token_urlencoded # URL-encoded token
+    local post_data  # HTTP POST'ed data
 
-    local token="$(wget --save-cookies "$COOKIE_FILE" --keep-session-cookies -O- "$BASE_URL"| grep    -siPo  '(?<=<input type=\"hidden\" name=\"authenticity_token\" value=\")(.*)(?=\" />)')" #load login page, get authenticity token and save cookies
+    # Load remote site, get needed HTML, parse for token.
+    html="$($TOR wget --save-cookies "$COOKIE_FILE" --keep-session-cookies -O - "$BASE_URL" 2>/dev/null | \
+        grep -siE '(meta\s+name="csrf-param"|input\s+type="hidden")'
+    )"
+    csrf_param="$(echo "$html" | \
+        grep -siEo 'meta\s+name="csrf-param"\s+content="\w+"' | \
+            cut -d '"' -f 4 \
+    )"
+    token="$(echo "$html" | \
+        grep -siEo "name=\"$csrf_param\"\s+value=\".*\"" | \
+            cut -d '"' -f 4 \
+    )"
+    token_urlencoded="$(echo -n "$token" | \
+        while IFS='' read -r -d '' -n 1 c; do \
+            printf '%%%02X' "'$c"; \
+        done; \
+    )"
 
-    local token_encoded="$(rawurlencode "$token")" #percent-encode the token
-    local post_data="authenticity_token=${token_encoded}&login=${username}&password=${password}"
+    post_data="${csrf_param}=${token_urlencoded}&login=${username}&password=${password}"
     
     echo "Logging in as $USERNAME..."
-    $TOR wget  --load-cookies "$COOKIE_FILE" --save-cookies "$COOKIE_FILE" --keep-session-cookies \
+    $TOR wget --quiet --load-cookies "$COOKIE_FILE" --save-cookies "$COOKIE_FILE" --keep-session-cookies \
         --post-data "$post_data" -O /dev/null \
             "$login_url"
-}
-
-
-# function to percent-encode the authenticity token
-# thanks to Orwellophile / stackoverflow :)
-function rawurlencode() {
-  local string="${1}"
-  local strlen=${#string}
-  local encoded=""
-  local pos c o
-
-  for (( pos=0 ; pos<strlen ; pos++ )); do
-     c=${string:$pos:1}
-     case "$c" in
-        [-_.~a-zA-Z0-9] ) o="${c}" ;;
-        * )               printf -v o '%%%02x' "'$c"
-     esac
-     encoded+="${o}"
-  done
-  echo "${encoded}"
-  REPLY="${encoded}"
 }
 
 # Function: getSubgroups

@@ -128,6 +128,19 @@ function cleanup () {
     IFS="$OLD_IFS"
 }
 
+# Function: urlencode
+#
+# URL-encodes (percent-encodes) the given value.
+# This is needed to properly send complex passwords.
+function urlencode () {
+    local string="$1"
+    echo -n "$(echo -n "$string" | \
+        while IFS='' read -r -d '' -n 1 c; do \
+            printf '%%%02X' "'$c"; \
+        done; \
+    )"
+}
+
 # Function: login
 #
 # Logs in to the Crabgrass server.
@@ -140,7 +153,6 @@ function login () {
     local html       # Acquired raw HTML
     local csrf_param # CSRF parameter name
     local token      # CSRF token value
-    local token_urlencoded # URL-encoded token
     local post_data  # HTTP POST'ed data
 
     # Load remote site, get needed HTML, parse for token.
@@ -155,13 +167,8 @@ function login () {
         grep -siEo "name=\"$csrf_param\"\s+value=\".*\"" | \
             cut -d '"' -f 4 \
     )"
-    token_urlencoded="$(echo -n "$token" | \
-        while IFS='' read -r -d '' -n 1 c; do \
-            printf '%%%02X' "'$c"; \
-        done; \
-    )"
 
-    post_data="${csrf_param}=${token_urlencoded}&login=${username}&password=${password}"
+    post_data="${csrf_param}=$(urlencode "$token")&login=${username}&password=$(urlencode "$password")"
     
     echo "Logging in as $USERNAME..."
     $TOR wget --quiet --load-cookies "$COOKIE_FILE" --save-cookies "$COOKIE_FILE" --keep-session-cookies \

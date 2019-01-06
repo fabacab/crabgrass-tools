@@ -393,13 +393,13 @@ scmCommit () {
 #     $E_NONWRITABLE_DIR
 checkPrerequisites () {
     # Check to make sure we have a `wget` available.
-    which -s wget
+    which "$WGET"
     if [ 1 -eq $? ]; then
-        echo "FATAL: $PROGRAM cannot find a suitable 'wget' binary." >&2
+        echo "FATAL: $PROGRAM cannot find a suitable '$WGET' binary." >&2
         exit $E_MISSING_WGET;
     fi
 
-    which -s "$SCM"
+    which "$SCM"
     if [ 1 -eq $? ]; then
         echo "FATAL: $PROGRAM cannot find a suitable '$SCM' binary." >&2
         exit $E_MISSING_SCM;

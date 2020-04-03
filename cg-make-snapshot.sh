@@ -49,7 +49,7 @@ IFS=$'\n \t'
 readonly PROGRAM=$(basename "$0")
 readonly VERSION="0.1.0"
 readonly WGET="$(which wget)"
-readonly COOKIE_FILE=$(mktemp "${PROGRAM}_cookies.XXXXX")
+readonly COOKIE_FILE=$(mktemp "${PROGRAM}_cookies.XXXXXXXX")
 readonly LOGIN_PATH="/session/login"
 
 # RETURN VALUES/EXIT STATUS CODES
@@ -187,7 +187,7 @@ usage () {
 }
 
 # Function: cleanup
-# 
+#
 # Removes cookies from the filesystem when the script terminates.
 # This is important because the cookie is an authentication token and
 # if it is compromised an attacker could impersonate a legitmate user.
@@ -247,7 +247,7 @@ login () {
     )"
 
     post_data="${csrf_param}=$(urlencode "$token")&login=${username}&password=$(urlencode "$password")"
-    
+
     echo "Logging in as $USERNAME..."
     $TOR "$WGET" --quiet --load-cookies "$COOKIE_FILE" --save-cookies "$COOKIE_FILE" --keep-session-cookies \
         --post-data "$post_data" -O /dev/null \
@@ -261,10 +261,12 @@ login () {
 # Outputs each found group on its own line.
 getSubgroups () {
     local group="$1"
-    $TOR "$WGET" --quiet --load-cookies "$COOKIE_FILE" -O - "${BASE_URL}/${group}/" \
-        | grep -E --only-matching "href=\"/${group}\+[^\"]+" \
-            | cut -d '"' -f 2 | cut -d '/' -f 2 \
-                | grep "$group" | sort | uniq
+    groups=$($TOR "$WGET" --quiet --load-cookies "$COOKIE_FILE" -O - "${BASE_URL}/${group}/" \
+      | grep -Eo "href=\"/${group}\+[^\"]+" \
+        | cut -d '"' -f 2 | cut -d '/' -f 2 \
+          | sort | uniq
+    )
+    echo $groups
 }
 
 # Function: mirrorGroup
@@ -285,12 +287,13 @@ mirrorGroup () {
     if [ 1 -eq $SUBGROUP ]; then
         echo "Finding subgroups for $group..."
         read -r -a subgroups <<< $(getSubgroups "$group")
-        echo "Mirroring group $group with all subgroups: ${subgroups[@]} "
+        echo "Mirroring group $group with all subgroups"
         for subgroup in ${subgroups[@]}; do
+            echo $subgroup
             include_path="${include_path},/${subgroup},/groups/${subgroup}"
             url="${url} ${BASE_URL}/${subgroup}"
         done
-    else 
+    else
       echo "Mirroring group $group..."
     fi
 

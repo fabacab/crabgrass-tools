@@ -1,6 +1,6 @@
 # Crabgrass Utilities - README
 
-This repository holds various scripts and tools that make working with [Crabgrass](https://github.com/riseuplabs/crabgrass-core), AGPL software libre for network organizing, easier. It includes:
+This repository holds various scripts and tools that make working with [Crabgrass](https://0xacab.org/riseuplabs/crabgrass), AGPL software libre for network organizing, easier. It includes:
 
 * [`cg-make-snapshot.sh`](#cg-make-snapshot-sh), a Bash shell script for creating static HTML snapshots (mirrors) of a Crabgrass group.
 

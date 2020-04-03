@@ -287,9 +287,8 @@ mirrorGroup () {
     if [ 1 -eq $SUBGROUP ]; then
         echo "Finding subgroups for $group..."
         read -r -a subgroups <<< $(getSubgroups "$group")
-        echo "Mirroring group $group with all subgroups"
+        echo "Mirroring group $group with all subgroups: ${subgroups[@]} "
         for subgroup in ${subgroups[@]}; do
-            echo $subgroup
             include_path="${include_path},/${subgroup},/groups/${subgroup}"
             url="${url} ${BASE_URL}/${subgroup}"
         done

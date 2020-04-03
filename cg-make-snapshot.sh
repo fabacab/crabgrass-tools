@@ -47,7 +47,7 @@ IFS=$'\n \t'
 # TODO: These should be lower-cased so as not to conflict with
 #       with any pre-existing environment variables.
 readonly PROGRAM=$(basename "$0")
-readonly VERSION="0.1.0"
+readonly VERSION="0.1.1"
 readonly WGET="$(which wget)"
 readonly COOKIE_FILE=$(mktemp "${PROGRAM}_cookies.XXXXXXXX")
 readonly LOGIN_PATH="/session/login"
